@@ -875,7 +875,7 @@ if (CRC16 == CRC16_get){ // если равны , то получено смс �
 						}
 						printf("FOTO+ \n");
 
-						//Ответ
+						//Ответ ( подготовка буфера)
 						translate_buffer[0] = start_byte;
 						translate_buffer[1] = module_vk;
 						translate_buffer[2] = val_from;
@@ -886,10 +886,13 @@ if (CRC16 == CRC16_get){ // если равны , то получено смс �
 						translate_buffer[7] = 0x00;//номер камеры
 						translate_buffer[8] = 0x0A; // код камеры
 						CRC16 = calculation_crc(translate_buffer, 9);//printf("CRC16 = %x\n", CRC16);
+						cout << "new CRC16="<<CRC16<<endl;
 						translate_buffer[9] = CRC16 >> 8;
 						translate_buffer[10] = CRC16 & 0x00FF;
 						printf("Otvet formiryetsya \n");
 
+
+						//байтстаффинг ответа
 						i = 1;
 						j = 1;
 						output_buffer[0] = translate_buffer[0];
@@ -911,12 +914,26 @@ if (CRC16 == CRC16_get){ // если равны , то получено смс �
 							j++;
 						}
 
-						//gpiod_line_set_value(gpio3_23, 1);
+
 						for (step_preambula = 0; step_preambula < step_up; step_preambula++){
 							send(sock, preambula, 1, 0);
 						}
-
+						for (i=0;i<j;i++){
+							printf("Значение output_buffer: %02X\n", output_buffer[i]);
+						}
+						//printf("Значение output_buffer[0]: %02X\n", output_buffer[0]);
+cout << "J="<<j<<endl;
 						write(sock, &output_buffer[0], j);
+
+/*
+						if ((photo_alarm.size() != 0x00) || (photo_after_alarm.size() != 0x00)){
+															for (step_preambula = 0; step_preambula < step_up; step_preambula++){
+																send(sock, preambula, 1, 0);
+															}
+
+															write(sock, &output_buffer[0], j);
+						}
+*/
 						printf("Otvet zapisyvaetsya \n");
 
 						//очистка буферов
@@ -1163,11 +1180,11 @@ if (CRC16 == CRC16_get){ // если равны , то получено смс �
 
     // Запись преамбулы в последовательный порт
     for (step_preambula = 0; step_preambula < step_up; step_preambula++) {
-    	send(sock, preambula, 1, 0);
+    	write(sock, preambula, 1);
     }
 
     // Запись буфера в последовательный порт
-    send(sock, &output_buffer[0], j, 0);
+    write(sock, &output_buffer[0], j);
 
     // Очистка буферов и переменных
     memset(&get_buffer, '\0', sizeof(get_buffer));
@@ -1209,4 +1226,3 @@ default : {
     return 0;
 
 }
-
